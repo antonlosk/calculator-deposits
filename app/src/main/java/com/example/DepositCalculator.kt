@@ -26,12 +26,22 @@ class DepositCalculator {
         if (isCapitalization) {
             for (i in 1..totalMonths) {
                 currentAmount *= (1 + (rate / 100) / 12)
+                if (!isTermInYears || i % 12 == 0) {
+                    growth.add(currentAmount)
+                }
+            }
+            if (isTermInYears && totalMonths % 12 != 0) {
                 growth.add(currentAmount)
             }
         } else {
             val monthlyProfit = initialAmount * (rate / 100) / 12.0
             for (i in 1..totalMonths) {
                 currentAmount += monthlyProfit
+                if (!isTermInYears || i % 12 == 0) {
+                    growth.add(currentAmount)
+                }
+            }
+            if (isTermInYears && totalMonths % 12 != 0) {
                 growth.add(currentAmount)
             }
         }
