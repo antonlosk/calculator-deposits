@@ -1,0 +1,6 @@
+{
+  "name": "Калькулятор вклада",
+  "description": "Приложение для расчета вкладов с AI-ассистентом",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
