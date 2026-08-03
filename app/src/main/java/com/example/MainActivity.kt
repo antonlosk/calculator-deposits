@@ -33,6 +33,15 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.platform.LocalDensity
 
 class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -265,55 +274,113 @@ private fun NavigationItem(icon: androidx.compose.ui.graphics.vector.ImageVector
 fun DepositChart(data: List<Double>, modifier: Modifier = Modifier) {
     if (data.isEmpty()) return
     val primaryColor = MaterialTheme.colorScheme.primary
+    val textColor = MaterialTheme.colorScheme.outline
+    val textMeasurer = rememberTextMeasurer()
+    val scrollState = rememberScrollState()
+
+    val animationProgress = remember { Animatable(0f) }
+    LaunchedEffect(data) {
+        animationProgress.snapTo(0f)
+        animationProgress.animateTo(1f, animationSpec = tween(durationMillis = 1200, easing = FastOutSlowInEasing))
+    }
+
+    val pointCount = data.size
+    val minSpacing = 40.dp
+    val density = LocalDensity.current
+    val minWidthPx = with(density) { (minSpacing * pointCount.toFloat()).toPx() }
     
-    Canvas(modifier = modifier) {
-        val maxAmount = data.maxOrNull()?.toFloat() ?: 0f
-        val minAmount = data.minOrNull()?.toFloat() ?: 0f
-        val range = if (maxAmount == minAmount) 1f else maxAmount - minAmount
-        
-        val width = size.width
-        val height = size.height
-        val stepX = width / (data.size - 1).coerceAtLeast(1).toFloat()
-        
-        val path = Path()
-        val fillPath = Path()
-        
-        val padding = height * 0.1f
-        val chartHeight = height - padding * 2
-        
-        data.forEachIndexed { index, value ->
-            val x = index * stepX
-            val normalizedY = if (range == 0f) 0f else (value.toFloat() - minAmount) / range
-            val y = height - padding - (normalizedY * chartHeight)
+    Box(
+        modifier = modifier.horizontalScroll(scrollState)
+    ) {
+        Canvas(modifier = Modifier.fillMaxHeight().width(maxOf(300.dp, with(density) { minWidthPx.toDp() }))) {
+            val maxAmount = data.maxOrNull()?.toFloat() ?: 0f
+            val minAmount = data.minOrNull()?.toFloat() ?: 0f
+            val range = if (maxAmount == minAmount) 1f else maxAmount - minAmount
             
-            if (index == 0) {
-                path.moveTo(x, y)
-                fillPath.moveTo(x, height)
-                fillPath.lineTo(x, y)
-            } else {
-                path.lineTo(x, y)
-                fillPath.lineTo(x, y)
+            val width = size.width
+            val height = size.height
+            val stepX = width / (data.size - 1).coerceAtLeast(1).toFloat()
+            
+            val path = Path()
+            val fillPath = Path()
+            
+            val paddingY = height * 0.2f
+            val chartHeight = height - paddingY * 1.5f
+            
+            data.forEachIndexed { index, value ->
+                val x = index * stepX
+                val normalizedY = if (range == 0f) 0.5f else (value.toFloat() - minAmount) / range
+                val y = height - paddingY - (normalizedY * chartHeight)
+                
+                if (index == 0) {
+                    path.moveTo(x, y)
+                    fillPath.moveTo(x, height - paddingY)
+                    fillPath.lineTo(x, y)
+                } else {
+                    path.lineTo(x, y)
+                    fillPath.lineTo(x, y)
+                }
+                
+                if (index == data.lastIndex) {
+                    fillPath.lineTo(x, height - paddingY)
+                    fillPath.close()
+                }
             }
             
-            if (index == data.lastIndex) {
-                fillPath.lineTo(x, height)
-                fillPath.close()
+            clipRect(right = width * animationProgress.value) {
+                drawPath(
+                    path = fillPath,
+                    brush = Brush.verticalGradient(
+                        colors = listOf(primaryColor.copy(alpha = 0.3f), Color.Transparent),
+                        startY = 0f,
+                        endY = height - paddingY
+                    )
+                )
+                
+                drawPath(
+                    path = path,
+                    color = primaryColor,
+                    style = Stroke(width = 3.dp.toPx())
+                )
+
+                val labelStep = if (data.size > 36) 12 else if (data.size > 12) 6 else 1
+                
+                data.forEachIndexed { index, value ->
+                    val x = index * stepX
+                    val normalizedY = if (range == 0f) 0.5f else (value.toFloat() - minAmount) / range
+                    val y = height - paddingY - (normalizedY * chartHeight)
+
+                    if (index == 0 || index == data.lastIndex || index % labelStep == 0) {
+                        drawCircle(
+                            color = primaryColor,
+                            radius = 4.dp.toPx(),
+                            center = androidx.compose.ui.geometry.Offset(x, y)
+                        )
+                        
+                        val labelText = if (index > 0 && index % 12 == 0) {
+                            "${index / 12} л"
+                        } else {
+                            "$index м"
+                        }
+                        
+                        val textLayoutResult = textMeasurer.measure(
+                            text = labelText,
+                            style = TextStyle(
+                                color = textColor,
+                                fontSize = 10.sp
+                            )
+                        )
+                        
+                        drawText(
+                            textLayoutResult = textLayoutResult,
+                            topLeft = androidx.compose.ui.geometry.Offset(
+                                x = x - textLayoutResult.size.width / 2f,
+                                y = height - paddingY + 8.dp.toPx()
+                            )
+                        )
+                    }
+                }
             }
         }
-        
-        drawPath(
-            path = fillPath,
-            brush = Brush.verticalGradient(
-                colors = listOf(primaryColor.copy(alpha = 0.3f), Color.Transparent),
-                startY = 0f,
-                endY = height
-            )
-        )
-        
-        drawPath(
-            path = path,
-            color = primaryColor,
-            style = Stroke(width = 3.dp.toPx())
-        )
     }
 }

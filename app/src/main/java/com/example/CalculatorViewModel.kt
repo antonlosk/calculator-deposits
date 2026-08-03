@@ -26,6 +26,8 @@ class CalculatorViewModel : ViewModel() {
     private val _state = MutableStateFlow(CalculatorState())
     val state: StateFlow<CalculatorState> = _state.asStateFlow()
 
+    private val calculator = DepositCalculator()
+
     init {
         calculate()
     }
@@ -61,34 +63,12 @@ class CalculatorViewModel : ViewModel() {
         val termValue = s.term.replace(',', '.').toDoubleOrNull() ?: 0.0
         val rate = s.interestRate.replace(',', '.').toDoubleOrNull() ?: 0.0
 
-        if (amount <= 0 || termValue <= 0 || rate <= 0) {
-            _state.value = _state.value.copy(finalAmount = 0.0, profit = 0.0, growthData = emptyList())
-            return
-        }
-
-        val totalMonths = if (s.isTermInYears) (termValue * 12).toInt() else termValue.toInt()
-        val growth = mutableListOf<Double>()
-        growth.add(amount)
-
-        var currentAmount = amount
-        if (s.isCapitalization) {
-            for (i in 1..totalMonths) {
-                currentAmount *= (1 + (rate / 100) / 12)
-                growth.add(currentAmount)
-            }
-        } else {
-            val monthlyProfit = amount * (rate / 100) / 12.0
-            for (i in 1..totalMonths) {
-                currentAmount += monthlyProfit
-                growth.add(currentAmount)
-            }
-        }
-        val finalAmount = currentAmount
+        val result = calculator.calculate(amount, termValue, rate, s.isTermInYears, s.isCapitalization)
 
         _state.value = _state.value.copy(
-            finalAmount = finalAmount,
-            profit = finalAmount - amount,
-            growthData = growth
+            finalAmount = result.finalAmount,
+            profit = result.profit,
+            growthData = result.growthData
         )
     }
 }
