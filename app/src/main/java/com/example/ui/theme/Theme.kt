@@ -32,12 +32,19 @@ private val ElegantDarkColorScheme =
 
 @Composable
 fun MyApplicationTheme(
-  darkTheme: Boolean = true,
+  darkTheme: Boolean = isSystemInDarkTheme(),
   // Dynamic color is available on Android 12+
-  dynamicColor: Boolean = false,
+  dynamicColor: Boolean = true,
   content: @Composable () -> Unit,
 ) {
-  val colorScheme = ElegantDarkColorScheme
+  val colorScheme =
+    when {
+      dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+        val context = LocalContext.current
+        if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+      }
+      else -> ElegantDarkColorScheme
+    }
 
   MaterialTheme(colorScheme = colorScheme, typography = Typography, content = content)
 }

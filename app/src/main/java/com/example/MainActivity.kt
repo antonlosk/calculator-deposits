@@ -29,6 +29,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ui.theme.MyApplicationTheme
 import java.text.NumberFormat
 import java.util.Locale
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
 
 class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,7 +55,6 @@ fun CalculatorScreen(
     viewModel: CalculatorViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsState()
-    var userQuery by remember { mutableStateOf("") }
     val formatter = remember { NumberFormat.getCurrencyInstance(Locale("ru", "RU")) }
 
     Column(
@@ -124,11 +127,13 @@ fun CalculatorScreen(
                             Text("Доход", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
                             Text("+${formatter.format(state.profit)}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
                         }
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Налог (13%)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
-                            val tax = if (state.profit > 150000) (state.profit - 150000) * 0.13 else 0.0 // Simplified tax logic just for visual
-                            Text(formatter.format(tax), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Medium)
-                        }
+                    }
+                    
+                    if (state.growthData.size > 1) {
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Text("ГРАФИК РОСТА", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        DepositChart(data = state.growthData, modifier = Modifier.fillMaxWidth().height(120.dp))
                     }
                 }
             }
@@ -154,20 +159,36 @@ fun CalculatorScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    OutlinedTextField(
-                        value = state.months,
-                        onValueChange = viewModel::onMonthsChanged,
-                        label = { Text("СРОК (МЕС.)") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.weight(1f).testTag("input_months"),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                            focusedContainerColor = MaterialTheme.colorScheme.surface,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.surfaceVariant,
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        ),
-                        shape = RoundedCornerShape(16.dp)
-                    )
+                    Column(modifier = Modifier.weight(1.2f)) {
+                        OutlinedTextField(
+                            value = state.term,
+                            onValueChange = viewModel::onTermChanged,
+                            label = { Text(if (state.isTermInYears) "СРОК (ЛЕТ)" else "СРОК (МЕС.)") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.fillMaxWidth().testTag("input_term"),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.surfaceVariant,
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            ),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                            FilterChip(
+                                selected = !state.isTermInYears,
+                                onClick = { viewModel.onTermTypeChanged(false) },
+                                label = { Text("Мес.") }
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            FilterChip(
+                                selected = state.isTermInYears,
+                                onClick = { viewModel.onTermTypeChanged(true) },
+                                label = { Text("Лет") }
+                            )
+                        }
+                    }
 
                     OutlinedTextField(
                         value = state.interestRate,
@@ -209,65 +230,6 @@ fun CalculatorScreen(
                 }
             }
 
-            // AI Action
-            Button(
-                onClick = { viewModel.askAiAboutRates() },
-                modifier = Modifier.fillMaxWidth().height(56.dp).testTag("btn_search_rates"),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                ),
-                shape = RoundedCornerShape(28.dp)
-            ) {
-                Icon(Icons.Default.Search, contentDescription = "Поиск")
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Узнать актуальные ставки", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-            }
-
-            OutlinedTextField(
-                value = userQuery,
-                onValueChange = { userQuery = it },
-                label = { Text("Спросить совет у ИИ") },
-                modifier = Modifier.fillMaxWidth().testTag("input_query"),
-                colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                    focusedContainerColor = MaterialTheme.colorScheme.surface,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.surfaceVariant,
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                ),
-                shape = RoundedCornerShape(16.dp),
-                trailingIcon = {
-                    IconButton(onClick = { 
-                        viewModel.askAiAdvice(userQuery) 
-                        userQuery = ""
-                    }) {
-                        Icon(Icons.Default.AutoAwesome, contentDescription = "Спросить", tint = MaterialTheme.colorScheme.primary)
-                    }
-                }
-            )
-
-            AnimatedVisibility(visible = state.isLoadingAi || state.aiResponse.isNotEmpty()) {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        if (state.isLoadingAi) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.align(Alignment.CenterHorizontally),
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        } else {
-                            Text(
-                                text = state.aiResponse,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
-                        }
-                    }
-                }
-            }
             Spacer(modifier = Modifier.height(16.dp))
         }
 
@@ -296,5 +258,62 @@ private fun NavigationItem(icon: androidx.compose.ui.graphics.vector.ImageVector
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Icon(icon, contentDescription = label, tint = color)
         Text(label, style = MaterialTheme.typography.labelSmall, color = color)
+    }
+}
+
+@Composable
+fun DepositChart(data: List<Double>, modifier: Modifier = Modifier) {
+    if (data.isEmpty()) return
+    val primaryColor = MaterialTheme.colorScheme.primary
+    
+    Canvas(modifier = modifier) {
+        val maxAmount = data.maxOrNull()?.toFloat() ?: 0f
+        val minAmount = data.minOrNull()?.toFloat() ?: 0f
+        val range = if (maxAmount == minAmount) 1f else maxAmount - minAmount
+        
+        val width = size.width
+        val height = size.height
+        val stepX = width / (data.size - 1).coerceAtLeast(1).toFloat()
+        
+        val path = Path()
+        val fillPath = Path()
+        
+        val padding = height * 0.1f
+        val chartHeight = height - padding * 2
+        
+        data.forEachIndexed { index, value ->
+            val x = index * stepX
+            val normalizedY = if (range == 0f) 0f else (value.toFloat() - minAmount) / range
+            val y = height - padding - (normalizedY * chartHeight)
+            
+            if (index == 0) {
+                path.moveTo(x, y)
+                fillPath.moveTo(x, height)
+                fillPath.lineTo(x, y)
+            } else {
+                path.lineTo(x, y)
+                fillPath.lineTo(x, y)
+            }
+            
+            if (index == data.lastIndex) {
+                fillPath.lineTo(x, height)
+                fillPath.close()
+            }
+        }
+        
+        drawPath(
+            path = fillPath,
+            brush = Brush.verticalGradient(
+                colors = listOf(primaryColor.copy(alpha = 0.3f), Color.Transparent),
+                startY = 0f,
+                endY = height
+            )
+        )
+        
+        drawPath(
+            path = path,
+            color = primaryColor,
+            style = Stroke(width = 3.dp.toPx())
+        )
     }
 }
