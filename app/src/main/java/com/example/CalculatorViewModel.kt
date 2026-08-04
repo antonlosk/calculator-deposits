@@ -16,9 +16,11 @@ data class CalculatorState(
     val term: String = "12",
     val isTermInYears: Boolean = false,
     val interestRate: String = "15.0",
+    val isEffectiveRate: Boolean = false,
     val isCapitalization: Boolean = false,
     val finalAmount: Double = 0.0,
     val profit: Double = 0.0,
+    val calculatedEffectiveRate: Double? = null,
     val growthData: List<ChartPoint> = emptyList()
 )
 
@@ -52,6 +54,11 @@ class CalculatorViewModel : ViewModel() {
         calculate()
     }
 
+    fun onRateTypeChanged(isEffective: Boolean) {
+        _state.value = _state.value.copy(isEffectiveRate = isEffective)
+        calculate()
+    }
+
     fun onCapitalizationChanged(value: Boolean) {
         _state.value = _state.value.copy(isCapitalization = value)
         calculate()
@@ -63,11 +70,16 @@ class CalculatorViewModel : ViewModel() {
         val termValue = s.term.replace(',', '.').toDoubleOrNull() ?: 0.0
         val rate = s.interestRate.replace(',', '.').toDoubleOrNull() ?: 0.0
 
-        val result = calculator.calculate(amount, termValue, rate, s.isTermInYears, s.isCapitalization)
+        val result = calculator.calculate(amount, termValue, rate, s.isTermInYears, s.isCapitalization, s.isEffectiveRate)
+
+        val calculatedEffectiveRate = if (!s.isEffectiveRate && s.isCapitalization && rate > 0) {
+            ((1 + rate / 100 / 12).pow(12) - 1) * 100
+        } else null
 
         _state.value = _state.value.copy(
             finalAmount = result.finalAmount,
             profit = result.profit,
+            calculatedEffectiveRate = calculatedEffectiveRate,
             growthData = result.growthData
         )
     }

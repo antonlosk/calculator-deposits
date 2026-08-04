@@ -18,7 +18,8 @@ class DepositCalculator {
         termValue: Double,
         rate: Double,
         isTermInYears: Boolean,
-        isCapitalization: Boolean
+        isCapitalization: Boolean,
+        isEffectiveRate: Boolean
     ): CalculationResult {
         if (initialAmount <= 0 || termValue <= 0 || rate <= 0) {
             return CalculationResult(0.0, 0.0, emptyList())
@@ -28,8 +29,10 @@ class DepositCalculator {
         val growth = mutableListOf<ChartPoint>()
         growth.add(ChartPoint(0, initialAmount, 0.0))
 
+        val useCapitalization = isCapitalization && !isEffectiveRate
         var currentAmount = initialAmount
-        if (isCapitalization) {
+
+        if (useCapitalization) {
             for (i in 1..totalMonths) {
                 currentAmount *= (1 + (rate / 100) / 12)
                 growth.add(ChartPoint(i, currentAmount, currentAmount - initialAmount))

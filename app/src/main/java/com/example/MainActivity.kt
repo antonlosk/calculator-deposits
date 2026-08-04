@@ -143,6 +143,13 @@ fun CalculatorScreen(
                             Text("Доход", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
                             Text("+${formatter.format(state.profit)}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
                         }
+                        
+                        if (state.calculatedEffectiveRate != null) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Эффективная ставка", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
+                                Text(String.format(Locale("ru", "RU"), "%.2f%%", state.calculatedEffectiveRate), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
+                            }
+                        }
                     }
                     
                     if (state.growthData.size > 1) {
@@ -209,42 +216,60 @@ fun CalculatorScreen(
                         }
                     }
 
-                    OutlinedTextField(
-                        value = state.interestRate,
-                        onValueChange = viewModel::onInterestRateChanged,
-                        label = { Text("СТАВКА (%)") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.weight(1f).testTag("input_rate"),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                            focusedContainerColor = MaterialTheme.colorScheme.surface,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.surfaceVariant,
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        ),
-                        shape = RoundedCornerShape(16.dp)
-                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        OutlinedTextField(
+                            value = state.interestRate,
+                            onValueChange = viewModel::onInterestRateChanged,
+                            label = { Text("СТАВКА (%)") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.fillMaxWidth().testTag("input_rate"),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.surfaceVariant,
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            ),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                            FilterChip(
+                                selected = !state.isEffectiveRate,
+                                onClick = { viewModel.onRateTypeChanged(false) },
+                                label = { Text("Ном.") }
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            FilterChip(
+                                selected = state.isEffectiveRate,
+                                onClick = { viewModel.onRateTypeChanged(true) },
+                                label = { Text("Эфф.") }
+                            )
+                        }
+                    }
                 }
 
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                AnimatedVisibility(visible = !state.isEffectiveRate) {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Капитализация процентов", color = MaterialTheme.colorScheme.onBackground)
-                        Switch(
-                            checked = state.isCapitalization,
-                            onCheckedChange = viewModel::onCapitalizationChanged,
-                            modifier = Modifier.testTag("switch_capitalization"),
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                                checkedTrackColor = MaterialTheme.colorScheme.primary
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Капитализация процентов", color = MaterialTheme.colorScheme.onBackground)
+                            Switch(
+                                checked = state.isCapitalization,
+                                onCheckedChange = viewModel::onCapitalizationChanged,
+                                modifier = Modifier.testTag("switch_capitalization"),
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                                    checkedTrackColor = MaterialTheme.colorScheme.primary
+                                )
                             )
-                        )
+                        }
                     }
                 }
             }
