@@ -1,9 +1,14 @@
 package com.example
 
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
+
+enum class TermUnit {
+    DAYS, MONTHS, YEARS
+}
 
 data class ChartPoint(
-    val monthsFromStart: Int,
+    val monthsFromStart: Int, // Can be days or months, but let's keep it abstract, maybe rename to 'unitsFromStart'
     val amount: Double,
     val profit: Double
 )
@@ -19,7 +24,7 @@ class DepositCalculator {
         initialAmount: Double,
         termValue: Double,
         rate: Double,
-        isTermInYears: Boolean,
+        termUnit: TermUnit,
         isCapitalization: Boolean,
         isEffectiveRate: Boolean,
         startDate: LocalDate
@@ -28,7 +33,12 @@ class DepositCalculator {
             return CalculationResult(0.0, 0.0, emptyList())
         }
 
-        val totalMonths = if (isTermInYears) (termValue * 12).toInt() else termValue.toInt()
+        val endDate = when (termUnit) {
+            TermUnit.DAYS -> startDate.plusDays(termValue.toLong())
+            TermUnit.MONTHS -> startDate.plusMonths(termValue.toLong())
+            TermUnit.YEARS -> startDate.plusYears(termValue.toLong())
+        }
+
         val growth = mutableListOf<ChartPoint>()
         growth.add(ChartPoint(0, initialAmount, 0.0))
 
@@ -38,7 +48,6 @@ class DepositCalculator {
         var totalProfit = 0.0
         
         var currentDate = startDate
-        val endDate = startDate.plusMonths(totalMonths.toLong())
         
         var monthIndex = 1
         var nextCapDate = startDate.plusMonths(1)
@@ -52,7 +61,7 @@ class DepositCalculator {
             
             currentDate = currentDate.plusDays(1)
             
-            if (currentDate == nextCapDate) {
+            if (currentDate == nextCapDate || currentDate == endDate) {
                 if (useCapitalization) {
                     currentBalance += accumulatedInterest
                     accumulatedInterest = 0.0
@@ -61,8 +70,10 @@ class DepositCalculator {
                 val displayAmount = if (useCapitalization) currentBalance else initialAmount + totalProfit
                 growth.add(ChartPoint(monthIndex, displayAmount, totalProfit))
                 
-                monthIndex++
-                nextCapDate = startDate.plusMonths(monthIndex.toLong())
+                if (currentDate == nextCapDate) {
+                    monthIndex++
+                    nextCapDate = startDate.plusMonths(monthIndex.toLong())
+                }
             }
         }
         
