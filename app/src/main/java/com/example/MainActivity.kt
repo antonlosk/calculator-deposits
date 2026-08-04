@@ -51,7 +51,6 @@ import java.time.ZoneId
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.platform.LocalDensity
 
@@ -314,57 +313,21 @@ fun CalculatorScreen(
                         shape = RoundedCornerShape(16.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Column {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text("Капитализация процентов", color = MaterialTheme.colorScheme.onBackground)
-                                Switch(
-                                    checked = state.isCapitalization,
-                                    onCheckedChange = viewModel::onCapitalizationChanged,
-                                    modifier = Modifier.testTag("switch_capitalization"),
-                                    colors = SwitchDefaults.colors(
-                                        checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                                        checkedTrackColor = MaterialTheme.colorScheme.primary
-                                    )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Капитализация процентов", color = MaterialTheme.colorScheme.onBackground)
+                            Switch(
+                                checked = state.isCapitalization,
+                                onCheckedChange = viewModel::onCapitalizationChanged,
+                                modifier = Modifier.testTag("switch_capitalization"),
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                                    checkedTrackColor = MaterialTheme.colorScheme.primary
                                 )
-                            }
-                            
-                            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.surfaceVariant)
-                            
-                            var menuExpanded by remember { mutableStateOf(false) }
-                            
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.fillMaxWidth().clickable { menuExpanded = true }.padding(horizontal = 16.dp, vertical = 16.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text("Периодичность выплат", color = MaterialTheme.colorScheme.onBackground)
-                                
-                                Box {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Text(state.payoutPeriod.title, color = MaterialTheme.colorScheme.primary)
-                                        Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                                    }
-                                    
-                                    DropdownMenu(
-                                        expanded = menuExpanded,
-                                        onDismissRequest = { menuExpanded = false }
-                                    ) {
-                                        PayoutPeriod.values().forEach { period ->
-                                            DropdownMenuItem(
-                                                text = { Text(period.title) },
-                                                onClick = {
-                                                    viewModel.onPayoutPeriodChanged(period)
-                                                    menuExpanded = false
-                                                }
-                                            )
-                                        }
-                                    }
-                                }
-                            }
+                            )
                         }
                     }
                 }

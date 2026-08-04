@@ -12,14 +12,6 @@ import kotlinx.serialization.json.JsonObject
 import kotlin.math.pow
 import java.time.LocalDate
 
-enum class PayoutPeriod(val title: String) {
-    DAILY("Ежедневно"),
-    MONTHLY("Ежемесячно"),
-    QUARTERLY("Ежеквартально"),
-    ANNUALLY("Ежегодно"),
-    AT_END("В конце срока")
-}
-
 data class CalculatorState(
     val initialAmount: String = "100000",
     val term: String = "12",
@@ -27,7 +19,6 @@ data class CalculatorState(
     val interestRate: String = "15.0",
     val isEffectiveRate: Boolean = false,
     val isCapitalization: Boolean = false,
-    val payoutPeriod: PayoutPeriod = PayoutPeriod.MONTHLY,
     val finalAmount: Double = 0.0,
     val profit: Double = 0.0,
     val calculatedEffectiveRate: Double? = null,
@@ -79,11 +70,6 @@ class CalculatorViewModel : ViewModel() {
         _state.value = _state.value.copy(startDate = date)
         calculate()
     }
-    
-    fun onPayoutPeriodChanged(period: PayoutPeriod) {
-        _state.value = _state.value.copy(payoutPeriod = period)
-        calculate()
-    }
 
     private fun calculate() {
         val s = _state.value
@@ -91,7 +77,7 @@ class CalculatorViewModel : ViewModel() {
         val termValue = s.term.replace(',', '.').toDoubleOrNull() ?: 0.0
         val rate = s.interestRate.replace(',', '.').toDoubleOrNull() ?: 0.0
 
-        val result = calculator.calculate(amount, termValue, rate, s.isTermInYears, s.isCapitalization, s.isEffectiveRate, s.startDate, s.payoutPeriod)
+        val result = calculator.calculate(amount, termValue, rate, s.isTermInYears, s.isCapitalization, s.isEffectiveRate, s.startDate)
 
         val calculatedEffectiveRate = if (!s.isEffectiveRate && s.isCapitalization && rate > 0 && termValue > 0 && amount > 0) {
             val totalMonths = if (s.isTermInYears) termValue * 12 else termValue

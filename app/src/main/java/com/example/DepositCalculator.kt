@@ -22,8 +22,7 @@ class DepositCalculator {
         isTermInYears: Boolean,
         isCapitalization: Boolean,
         isEffectiveRate: Boolean,
-        startDate: LocalDate,
-        payoutPeriod: PayoutPeriod
+        startDate: LocalDate
     ): CalculationResult {
         if (initialAmount <= 0 || termValue <= 0 || rate <= 0) {
             return CalculationResult(0.0, 0.0, emptyList())
@@ -41,17 +40,8 @@ class DepositCalculator {
         var currentDate = startDate
         val endDate = startDate.plusMonths(totalMonths.toLong())
         
-        var capPeriodsCount = 0L
-        var nextCapDate = when (payoutPeriod) {
-            PayoutPeriod.DAILY -> startDate.plusDays(1)
-            PayoutPeriod.MONTHLY -> startDate.plusMonths(1)
-            PayoutPeriod.QUARTERLY -> startDate.plusMonths(3)
-            PayoutPeriod.ANNUALLY -> startDate.plusYears(1)
-            PayoutPeriod.AT_END -> endDate
-        }
-        
         var monthIndex = 1
-        var nextMonthDate = startDate.plusMonths(1)
+        var nextCapDate = startDate.plusMonths(1)
 
         while (currentDate.isBefore(endDate)) {
             val daysInYear = if (currentDate.isLeapYear) 366 else 365
@@ -68,24 +58,11 @@ class DepositCalculator {
                     accumulatedInterest = 0.0
                 }
                 
-                capPeriodsCount++
-                nextCapDate = when (payoutPeriod) {
-                    PayoutPeriod.DAILY -> startDate.plusDays(capPeriodsCount + 1)
-                    PayoutPeriod.MONTHLY -> startDate.plusMonths(capPeriodsCount + 1)
-                    PayoutPeriod.QUARTERLY -> startDate.plusMonths((capPeriodsCount + 1) * 3)
-                    PayoutPeriod.ANNUALLY -> startDate.plusYears(capPeriodsCount + 1)
-                    PayoutPeriod.AT_END -> endDate
-                }
-                if (nextCapDate.isAfter(endDate)) {
-                    nextCapDate = endDate
-                }
-            }
-            
-            if (currentDate == nextMonthDate || currentDate == endDate) {
-                val displayAmount = if (useCapitalization) currentBalance + accumulatedInterest else initialAmount + totalProfit
+                val displayAmount = if (useCapitalization) currentBalance else initialAmount + totalProfit
                 growth.add(ChartPoint(monthIndex, displayAmount, totalProfit))
+                
                 monthIndex++
-                nextMonthDate = startDate.plusMonths(monthIndex.toLong())
+                nextCapDate = startDate.plusMonths(monthIndex.toLong())
             }
         }
         
