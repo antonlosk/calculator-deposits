@@ -136,7 +136,7 @@ fun AppContent(modifier: Modifier = Modifier) {
 @Composable
 fun MainContent(viewModel: CalculatorViewModel) {
     val state by viewModel.state.collectAsState()
-    val formatter = remember { NumberFormat.getCurrencyInstance(Locale("ru", "RU")) }
+    val formatter = remember { NumberFormat.getCurrencyInstance(Locale.forLanguageTag("ru-RU")) }
     
     Column(
         modifier = Modifier
@@ -184,7 +184,7 @@ fun MainContent(viewModel: CalculatorViewModel) {
                         if (state.calculatedEffectiveRate != null) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(stringResource(R.string.effective_rate), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
-                                Text(String.format(Locale("ru", "RU"), "%.2f%%", state.calculatedEffectiveRate), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
+                                Text(String.format(Locale.forLanguageTag("ru-RU"), "%.2f%%", state.calculatedEffectiveRate), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
                             }
                         }
                     }
@@ -396,7 +396,7 @@ fun MainContent(viewModel: CalculatorViewModel) {
 @Composable
 fun HistoryContent(viewModel: CalculatorViewModel) {
     val historyItems by viewModel.history.collectAsState(initial = emptyList())
-    val formatter = remember { NumberFormat.getCurrencyInstance(Locale("ru", "RU")) }
+    val formatter = remember { NumberFormat.getCurrencyInstance(Locale.forLanguageTag("ru-RU")) }
     
     if (historyItems.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -507,7 +507,7 @@ fun DepositChart(
     
     val textMeasurer = rememberTextMeasurer()
     val dateFormatter = remember { DateTimeFormatter.ofPattern("dd.MM.yyyy") }
-    val formatter = remember { NumberFormat.getCurrencyInstance(Locale("ru", "RU")).apply { 
+    val formatter = remember { NumberFormat.getCurrencyInstance(Locale.forLanguageTag("ru-RU")).apply { 
         maximumFractionDigits = 0 
     } }
     
