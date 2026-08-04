@@ -46,8 +46,13 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.time.Instant
+import java.time.ZoneId
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.foundation.clickable
 import androidx.compose.ui.platform.LocalDensity
 
 class MainActivity : ComponentActivity() {
@@ -158,6 +163,7 @@ fun CalculatorScreen(
                         Spacer(modifier = Modifier.height(16.dp))
                         DepositChart(
                             data = state.growthData, 
+                            startDate = state.startDate,
                             modifier = Modifier.fillMaxWidth().height(250.dp)
                         )
                     }
@@ -166,6 +172,60 @@ fun CalculatorScreen(
 
             // Inputs
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                var showDatePicker by remember { mutableStateOf(false) }
+                
+                @OptIn(ExperimentalMaterial3Api::class)
+                if (showDatePicker) {
+                    val datePickerState = rememberDatePickerState(
+                        initialSelectedDateMillis = state.startDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                    )
+                    DatePickerDialog(
+                        onDismissRequest = { showDatePicker = false },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                datePickerState.selectedDateMillis?.let { millis ->
+                                    val newDate = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate()
+                                    viewModel.onStartDateChanged(newDate)
+                                }
+                                showDatePicker = false
+                            }) {
+                                Text("OK")
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showDatePicker = false }) {
+                                Text("Отмена")
+                            }
+                        }
+                    ) {
+                        DatePicker(state = datePickerState)
+                    }
+                }
+
+                OutlinedTextField(
+                    value = state.startDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")),
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("ДАТА ОТКРЫТИЯ") },
+                    modifier = Modifier.fillMaxWidth().testTag("input_start_date").clickable { showDatePicker = true },
+                    trailingIcon = {
+                        IconButton(onClick = { showDatePicker = true }) {
+                            Icon(Icons.Default.DateRange, contentDescription = "Выбрать дату")
+                        }
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.surfaceVariant,
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        disabledBorderColor = MaterialTheme.colorScheme.surfaceVariant,
+                        disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                        disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    ),
+                    shape = RoundedCornerShape(16.dp),
+                    enabled = false // so click works on parent
+                )
+
                 OutlinedTextField(
                     value = state.initialAmount,
                     onValueChange = viewModel::onInitialAmountChanged,
@@ -254,21 +314,57 @@ fun CalculatorScreen(
                         shape = RoundedCornerShape(16.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("Капитализация процентов", color = MaterialTheme.colorScheme.onBackground)
-                            Switch(
-                                checked = state.isCapitalization,
-                                onCheckedChange = viewModel::onCapitalizationChanged,
-                                modifier = Modifier.testTag("switch_capitalization"),
-                                colors = SwitchDefaults.colors(
-                                    checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                                    checkedTrackColor = MaterialTheme.colorScheme.primary
+                        Column {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Капитализация процентов", color = MaterialTheme.colorScheme.onBackground)
+                                Switch(
+                                    checked = state.isCapitalization,
+                                    onCheckedChange = viewModel::onCapitalizationChanged,
+                                    modifier = Modifier.testTag("switch_capitalization"),
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                                        checkedTrackColor = MaterialTheme.colorScheme.primary
+                                    )
                                 )
-                            )
+                            }
+                            
+                            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.surfaceVariant)
+                            
+                            var menuExpanded by remember { mutableStateOf(false) }
+                            
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth().clickable { menuExpanded = true }.padding(horizontal = 16.dp, vertical = 16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Периодичность выплат", color = MaterialTheme.colorScheme.onBackground)
+                                
+                                Box {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(state.payoutPeriod.title, color = MaterialTheme.colorScheme.primary)
+                                        Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                    }
+                                    
+                                    DropdownMenu(
+                                        expanded = menuExpanded,
+                                        onDismissRequest = { menuExpanded = false }
+                                    ) {
+                                        PayoutPeriod.values().forEach { period ->
+                                            DropdownMenuItem(
+                                                text = { Text(period.title) },
+                                                onClick = {
+                                                    viewModel.onPayoutPeriodChanged(period)
+                                                    menuExpanded = false
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -307,7 +403,8 @@ private fun NavigationItem(icon: androidx.compose.ui.graphics.vector.ImageVector
 
 @Composable
 fun DepositChart(
-    data: List<ChartPoint>, 
+    data: List<ChartPoint>,
+    startDate: LocalDate,
     modifier: Modifier = Modifier
 ) {
     if (data.isEmpty()) return
@@ -321,7 +418,6 @@ fun DepositChart(
     val profitColor = MaterialTheme.colorScheme.tertiary
     
     val textMeasurer = rememberTextMeasurer()
-    val currentDate = remember { LocalDate.now() }
     val dateFormatter = remember { DateTimeFormatter.ofPattern("dd.MM.yyyy") }
     val formatter = remember { NumberFormat.getCurrencyInstance(Locale("ru", "RU")).apply { 
         maximumFractionDigits = 0 
@@ -452,7 +548,7 @@ fun DepositChart(
                 labelIndices.forEach { index ->
                     val point = data[index]
                     val x = leftPaddingPx + index * stepX
-                    val dateStr = currentDate.plusMonths(point.monthsFromStart.toLong()).format(dateFormatter)
+                    val dateStr = startDate.plusMonths(point.monthsFromStart.toLong()).format(dateFormatter)
                     
                     val textLayout = textMeasurer.measure(
                         text = dateStr,
@@ -499,7 +595,7 @@ fun DepositChart(
                     drawCircle(color = primaryColor, radius = 4.dp.toPx(), center = Offset(x, y))
                     
                     // Tooltip
-                    val dateStr = currentDate.plusMonths(point.monthsFromStart.toLong()).format(dateFormatter)
+                    val dateStr = startDate.plusMonths(point.monthsFromStart.toLong()).format(dateFormatter)
                     val amountStr = formatter.format(point.amount).replace(",00", "").replace(",0", "")
                     val profitStr = "Прибыль: +${formatter.format(point.profit).replace(",00", "").replace(",0", "")}"
                     

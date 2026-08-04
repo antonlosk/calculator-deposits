@@ -10,6 +10,15 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
 import kotlin.math.pow
+import java.time.LocalDate
+
+enum class PayoutPeriod(val title: String) {
+    DAILY("Ежедневно"),
+    MONTHLY("Ежемесячно"),
+    QUARTERLY("Ежеквартально"),
+    ANNUALLY("Ежегодно"),
+    AT_END("В конце срока")
+}
 
 data class CalculatorState(
     val initialAmount: String = "100000",
@@ -18,9 +27,11 @@ data class CalculatorState(
     val interestRate: String = "15.0",
     val isEffectiveRate: Boolean = false,
     val isCapitalization: Boolean = false,
+    val payoutPeriod: PayoutPeriod = PayoutPeriod.MONTHLY,
     val finalAmount: Double = 0.0,
     val profit: Double = 0.0,
     val calculatedEffectiveRate: Double? = null,
+    val startDate: LocalDate = LocalDate.now(),
     val growthData: List<ChartPoint> = emptyList()
 )
 
@@ -63,6 +74,16 @@ class CalculatorViewModel : ViewModel() {
         _state.value = _state.value.copy(isCapitalization = value)
         calculate()
     }
+    
+    fun onStartDateChanged(date: LocalDate) {
+        _state.value = _state.value.copy(startDate = date)
+        calculate()
+    }
+    
+    fun onPayoutPeriodChanged(period: PayoutPeriod) {
+        _state.value = _state.value.copy(payoutPeriod = period)
+        calculate()
+    }
 
     private fun calculate() {
         val s = _state.value
@@ -70,12 +91,12 @@ class CalculatorViewModel : ViewModel() {
         val termValue = s.term.replace(',', '.').toDoubleOrNull() ?: 0.0
         val rate = s.interestRate.replace(',', '.').toDoubleOrNull() ?: 0.0
 
-        val result = calculator.calculate(amount, termValue, rate, s.isTermInYears, s.isCapitalization, s.isEffectiveRate)
+        val result = calculator.calculate(amount, termValue, rate, s.isTermInYears, s.isCapitalization, s.isEffectiveRate, s.startDate, s.payoutPeriod)
 
-        val calculatedEffectiveRate = if (!s.isEffectiveRate && s.isCapitalization && rate > 0 && termValue > 0) {
+        val calculatedEffectiveRate = if (!s.isEffectiveRate && s.isCapitalization && rate > 0 && termValue > 0 && amount > 0) {
             val totalMonths = if (s.isTermInYears) termValue * 12 else termValue
             val termInYears = totalMonths / 12.0
-            val growthOverTerm = (1 + rate / 100 / 12).pow(totalMonths.toInt()) - 1
+            val growthOverTerm = result.profit / amount
             (growthOverTerm / termInYears) * 100
         } else null
 
