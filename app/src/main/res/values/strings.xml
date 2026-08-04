@@ -1,3 +1,36 @@
 <resources>
     <string name="app_name">Калькулятор вклада</string>
+    <string name="logo_content_description">Логотип</string>
+    <string name="app_package_name">com.antonlosk.calcdeposits</string>
+    <string name="tab_main">Главная</string>
+    <string name="tab_history">История</string>
+    <string name="total_amount">ИТОГОВАЯ СУММА</string>
+    <string name="profit">Доход</string>
+    <string name="effective_rate">Эффективная ставка</string>
+    <string name="growth_chart">ГРАФИК РОСТА</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Отмена</string>
+    <string name="start_date">ДАТА ОТКРЫТИЯ</string>
+    <string name="choose_date_content_description">Выбрать дату</string>
+    <string name="deposit_amount">СУММА ВКЛАДА (₽)</string>
+    <string name="term">СРОК</string>
+    <string name="term_days">Дни</string>
+    <string name="term_months">Мес.</string>
+    <string name="term_years">Лет</string>
+    <string name="rate">СТАВКА (%)</string>
+    <string name="rate_nominal">Ном.</string>
+    <string name="rate_effective">Эфф.</string>
+    <string name="capitalization">Капитализация процентов</string>
+    <string name="calculate">Рассчитать</string>
+    <string name="save">Сохранить</string>
+    <string name="history_empty">История пуста</string>
+    <string name="history_amount">Сумма: %1$s</string>
+    <string name="history_term_days_suffix">дней</string>
+    <string name="history_term_months_suffix">мес.</string>
+    <string name="history_term_years_suffix">лет</string>
+    <string name="history_term">Срок: %1$s %2$s</string>
+    <string name="history_rate">Ставка: %1$s%%</string>
+    <string name="history_total">Итог: %1$s</string>
+    <string name="profit_chart">Прибыль: +%1$s</string>
+    <string name="delete">Удалить</string>
 </resources>

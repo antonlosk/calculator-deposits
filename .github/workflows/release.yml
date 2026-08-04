@@ -76,7 +76,7 @@ jobs:
           echo "apk_name=$APK_NAME" >> $GITHUB_OUTPUT
 
       - name: Create Release and Upload APK
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.version.outputs.version }}
           name: Release ${{ steps.version.outputs.version }}

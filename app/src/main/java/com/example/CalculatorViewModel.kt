@@ -92,6 +92,12 @@ class CalculatorViewModel(private val repository: HistoryRepository) : ViewModel
         }
     }
 
+    fun onDeleteHistoryItem(id: Int) {
+        viewModelScope.launch {
+            repository.deleteById(id)
+        }
+    }
+
     private fun calculate() {
         val s = _state.value
         val amount = s.initialAmount.replace(',', '.').toDoubleOrNull() ?: 0.0

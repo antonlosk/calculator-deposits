@@ -1,5 +1,12 @@
 package com.example
 
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.rememberSwipeToDismissBoxState
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -82,11 +89,11 @@ fun AppContent(modifier: Modifier = Modifier) {
                         .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(12.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Default.Calculate, contentDescription = "Logo", tint = MaterialTheme.colorScheme.onPrimary)
+                    Icon(Icons.Default.Calculate, contentDescription = stringResource(R.string.logo_content_description), tint = MaterialTheme.colorScheme.onPrimary)
                 }
                 Column {
-                    Text("Калькулятор вклада", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
-                    Text("com.antonlosk.calcdeposits", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
+                    Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
+                    Text(stringResource(R.string.app_package_name), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
                 }
             }
         }
@@ -111,13 +118,13 @@ fun AppContent(modifier: Modifier = Modifier) {
             ) {
                 NavigationItem(
                     icon = Icons.Default.Calculate, 
-                    label = "Главная", 
+                    label = stringResource(R.string.tab_main), 
                     isSelected = currentTab == AppTab.MAIN,
                     onClick = { currentTab = AppTab.MAIN }
                 )
                 NavigationItem(
                     icon = Icons.Default.History, 
-                    label = "История", 
+                    label = stringResource(R.string.tab_history), 
                     isSelected = currentTab == AppTab.HISTORY,
                     onClick = { currentTab = AppTab.HISTORY }
                 )
@@ -149,7 +156,7 @@ fun MainContent(viewModel: CalculatorViewModel) {
                     modifier = Modifier.padding(24.dp)
                 ) {
                     Text(
-                        text = "ИТОГОВАЯ СУММА",
+                        text = stringResource(R.string.total_amount),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.primary,
                         letterSpacing = 1.sp
@@ -170,13 +177,13 @@ fun MainContent(viewModel: CalculatorViewModel) {
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("Доход", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
+                            Text(stringResource(R.string.profit), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
                             Text("+${formatter.format(state.profit)}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
                         }
                         
                         if (state.calculatedEffectiveRate != null) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("Эффективная ставка", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
+                                Text(stringResource(R.string.effective_rate), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
                                 Text(String.format(Locale("ru", "RU"), "%.2f%%", state.calculatedEffectiveRate), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
                             }
                         }
@@ -184,7 +191,7 @@ fun MainContent(viewModel: CalculatorViewModel) {
                     
                     if (state.growthData.size > 1) {
                         Spacer(modifier = Modifier.height(24.dp))
-                        Text("ГРАФИК РОСТА", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
+                        Text(stringResource(R.string.growth_chart), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
                         Spacer(modifier = Modifier.height(16.dp))
                         DepositChart(
                             data = state.growthData, 
@@ -214,12 +221,12 @@ fun MainContent(viewModel: CalculatorViewModel) {
                                 }
                                 showDatePicker = false
                             }) {
-                                Text("OK")
+                                Text(stringResource(R.string.ok))
                             }
                         },
                         dismissButton = {
                             TextButton(onClick = { showDatePicker = false }) {
-                                Text("Отмена")
+                                Text(stringResource(R.string.cancel))
                             }
                         }
                     ) {
@@ -231,11 +238,11 @@ fun MainContent(viewModel: CalculatorViewModel) {
                     value = state.startDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")),
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("ДАТА ОТКРЫТИЯ") },
+                    label = { Text(stringResource(R.string.start_date)) },
                     modifier = Modifier.fillMaxWidth().testTag("input_start_date").clickable { showDatePicker = true },
                     trailingIcon = {
                         IconButton(onClick = { showDatePicker = true }) {
-                            Icon(Icons.Default.DateRange, contentDescription = "Выбрать дату")
+                            Icon(Icons.Default.DateRange, contentDescription = stringResource(R.string.choose_date_content_description))
                         }
                     },
                     colors = OutlinedTextFieldDefaults.colors(
@@ -254,7 +261,7 @@ fun MainContent(viewModel: CalculatorViewModel) {
                 OutlinedTextField(
                     value = state.initialAmount,
                     onValueChange = viewModel::onInitialAmountChanged,
-                    label = { Text("СУММА ВКЛАДА (₽)") },
+                    label = { Text(stringResource(R.string.deposit_amount)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth().testTag("input_amount"),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -274,7 +281,7 @@ fun MainContent(viewModel: CalculatorViewModel) {
                         OutlinedTextField(
                             value = state.term,
                             onValueChange = viewModel::onTermChanged,
-                            label = { Text("СРОК") },
+                            label = { Text(stringResource(R.string.term)) },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             modifier = Modifier.fillMaxWidth().testTag("input_term"),
                             colors = OutlinedTextFieldDefaults.colors(
@@ -290,19 +297,19 @@ fun MainContent(viewModel: CalculatorViewModel) {
                             FilterChip(
                                 selected = state.termUnit == TermUnit.DAYS,
                                 onClick = { viewModel.onTermUnitChanged(TermUnit.DAYS) },
-                                label = { Text("Дни") }
+                                label = { Text(stringResource(R.string.term_days)) }
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             FilterChip(
                                 selected = state.termUnit == TermUnit.MONTHS,
                                 onClick = { viewModel.onTermUnitChanged(TermUnit.MONTHS) },
-                                label = { Text("Мес.") }
+                                label = { Text(stringResource(R.string.term_months)) }
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             FilterChip(
                                 selected = state.termUnit == TermUnit.YEARS,
                                 onClick = { viewModel.onTermUnitChanged(TermUnit.YEARS) },
-                                label = { Text("Лет") }
+                                label = { Text(stringResource(R.string.term_years)) }
                             )
                         }
                     }
@@ -311,7 +318,7 @@ fun MainContent(viewModel: CalculatorViewModel) {
                         OutlinedTextField(
                             value = state.interestRate,
                             onValueChange = viewModel::onInterestRateChanged,
-                            label = { Text("СТАВКА (%)") },
+                            label = { Text(stringResource(R.string.rate)) },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             modifier = Modifier.fillMaxWidth().testTag("input_rate"),
                             colors = OutlinedTextFieldDefaults.colors(
@@ -327,13 +334,13 @@ fun MainContent(viewModel: CalculatorViewModel) {
                             FilterChip(
                                 selected = !state.isEffectiveRate,
                                 onClick = { viewModel.onRateTypeChanged(false) },
-                                label = { Text("Ном.") }
+                                label = { Text(stringResource(R.string.rate_nominal)) }
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             FilterChip(
                                 selected = state.isEffectiveRate,
                                 onClick = { viewModel.onRateTypeChanged(true) },
-                                label = { Text("Эфф.") }
+                                label = { Text(stringResource(R.string.rate_effective)) }
                             )
                         }
                     }
@@ -350,7 +357,7 @@ fun MainContent(viewModel: CalculatorViewModel) {
                             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Капитализация процентов", color = MaterialTheme.colorScheme.onBackground)
+                            Text(stringResource(R.string.capitalization), color = MaterialTheme.colorScheme.onBackground)
                             Switch(
                                 checked = state.isCapitalization,
                                 onCheckedChange = viewModel::onCapitalizationChanged,
@@ -372,19 +379,20 @@ fun MainContent(viewModel: CalculatorViewModel) {
                     onClick = viewModel::onCalculateClicked,
                     modifier = Modifier.weight(1f).height(56.dp)
                 ) {
-                    Text("Рассчитать")
+                    Text(stringResource(R.string.calculate))
                 }
                 OutlinedButton(
                     onClick = viewModel::onSaveClicked,
                     modifier = Modifier.weight(1f).height(56.dp)
                 ) {
-                    Text("Сохранить")
+                    Text(stringResource(R.string.save))
                 }
             }
         }
     
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistoryContent(viewModel: CalculatorViewModel) {
     val historyItems by viewModel.history.collectAsState(initial = emptyList())
@@ -392,7 +400,7 @@ fun HistoryContent(viewModel: CalculatorViewModel) {
     
     if (historyItems.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("История пуста", color = MaterialTheme.colorScheme.outline)
+            Text(stringResource(R.string.history_empty), color = MaterialTheme.colorScheme.outline)
         }
     } else {
         LazyColumn(
@@ -400,28 +408,67 @@ fun HistoryContent(viewModel: CalculatorViewModel) {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(historyItems, key = { it.id }) { item ->
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "Сумма: ${formatter.format(item.initialAmount.toDoubleOrNull() ?: 0.0)}",
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        val termUnitStr = when (item.termUnitName) {
-                            "DAYS" -> "дней"
-                            "MONTHS" -> "мес."
-                            "YEARS" -> "лет"
-                            else -> item.termUnitName
+                val dismissState = rememberSwipeToDismissBoxState(
+                    confirmValueChange = {
+                        if (it == SwipeToDismissBoxValue.EndToStart) {
+                            viewModel.onDeleteHistoryItem(item.id)
+                            true
+                        } else {
+                            false
                         }
-                        Text("Срок: ${item.term} $termUnitStr")
-                        Text("Ставка: ${item.interestRate}%")
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text("Итог: ${formatter.format(item.finalAmount)}", color = MaterialTheme.colorScheme.primary)
+                    }
+                )
+                
+                SwipeToDismissBox(
+                    state = dismissState,
+                    backgroundContent = {
+                        val color by animateColorAsState(
+                            when (dismissState.targetValue) {
+                                SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
+                                else -> Color.Transparent
+                            }
+                        )
+                        Box(
+                            Modifier
+                                .fillMaxSize()
+                                .background(color, RoundedCornerShape(16.dp))
+                                .padding(horizontal = 20.dp),
+                            contentAlignment = Alignment.CenterEnd
+                        ) {
+                            if (dismissState.targetValue == SwipeToDismissBoxValue.EndToStart) {
+                                Icon(
+                                    Icons.Default.Delete,
+                                    contentDescription = stringResource(R.string.delete),
+                                    tint = MaterialTheme.colorScheme.onErrorContainer
+                                )
+                            }
+                        }
+                    },
+                    enableDismissFromStartToEnd = false
+                ) {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = stringResource(R.string.history_amount, formatter.format(item.initialAmount.toDoubleOrNull() ?: 0.0)),
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            val termUnitStr = when (item.termUnitName) {
+                                "DAYS" -> stringResource(R.string.history_term_days_suffix)
+                                "MONTHS" -> stringResource(R.string.history_term_months_suffix)
+                                "YEARS" -> stringResource(R.string.history_term_years_suffix)
+                                else -> item.termUnitName
+                            }
+                            Text(stringResource(R.string.history_term, item.term, termUnitStr))
+                            Text(stringResource(R.string.history_rate, item.interestRate))
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(stringResource(R.string.history_total, formatter.format(item.finalAmount)), color = MaterialTheme.colorScheme.primary)
+                        }
                     }
                 }
             }
@@ -463,6 +510,8 @@ fun DepositChart(
     val formatter = remember { NumberFormat.getCurrencyInstance(Locale("ru", "RU")).apply { 
         maximumFractionDigits = 0 
     } }
+    
+    val profitChartFormatStr = stringResource(R.string.profit_chart)
     
     val lineAnimationProgress = remember { Animatable(0f) }
     
@@ -638,7 +687,8 @@ fun DepositChart(
                     // Tooltip
                     val dateStr = startDate.plusMonths(point.monthsFromStart.toLong()).format(dateFormatter)
                     val amountStr = formatter.format(point.amount).replace(",00", "").replace(",0", "")
-                    val profitStr = "Прибыль: +${formatter.format(point.profit).replace(",00", "").replace(",0", "")}"
+                    val formattedProfit = formatter.format(point.profit).replace(",00", "").replace(",0", "")
+                    val profitStr = String.format(profitChartFormatStr, formattedProfit)
                     
                     val dateLabel = textMeasurer.measure(dateStr, style = TextStyle(color = tooltipTextColor, fontSize = 10.sp))
                     val amountLabel = textMeasurer.measure(amountStr, style = TextStyle(color = primaryColor, fontSize = 14.sp, fontWeight = FontWeight.Bold))
