@@ -100,16 +100,15 @@ class CalculatorViewModel(private val repository: HistoryRepository) : ViewModel
 
         val result = calculator.calculate(amount, termValue, rate, s.termUnit, s.isCapitalization, s.isEffectiveRate, s.startDate)
 
-        val calculatedEffectiveRate = if (!s.isEffectiveRate && s.isCapitalization && rate > 0 && termValue > 0 && amount > 0) {
-            val termInYears = when (s.termUnit) {
-                TermUnit.YEARS -> termValue
-                TermUnit.MONTHS -> termValue / 12.0
-                TermUnit.DAYS -> termValue / 365.0 // Approximate for effective rate calculation display
-            }
-            if (termInYears > 0) {
-                val growthOverTerm = result.profit / amount
-                (growthOverTerm / termInYears) * 100
-            } else null
+        val endDate = when (s.termUnit) {
+            TermUnit.DAYS -> s.startDate.plusDays(termValue.toLong())
+            TermUnit.MONTHS -> s.startDate.plusMonths(termValue.toLong())
+            TermUnit.YEARS -> s.startDate.plusYears(termValue.toLong())
+        }
+        val daysInTerm = java.time.temporal.ChronoUnit.DAYS.between(s.startDate, endDate)
+
+        val calculatedEffectiveRate = if (!s.isEffectiveRate && s.isCapitalization && rate > 0 && daysInTerm > 0 && amount > 0) {
+            (result.profit / amount) * (365.0 / daysInTerm) * 100.0
         } else null
 
         _state.value = _state.value.copy(

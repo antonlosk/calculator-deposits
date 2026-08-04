@@ -57,15 +57,17 @@ class DepositCalculator {
             val dailyInterest = currentBalance * (rate / 100.0) / daysInYear
             
             accumulatedInterest += dailyInterest
-            totalProfit += dailyInterest
             
             currentDate = currentDate.plusDays(1)
             
             if (currentDate == nextCapDate || currentDate == endDate) {
+                val roundedInterest = kotlin.math.round(accumulatedInterest * 100) / 100.0
+                totalProfit += roundedInterest
+
                 if (useCapitalization) {
-                    currentBalance += accumulatedInterest
-                    accumulatedInterest = 0.0
+                    currentBalance += roundedInterest
                 }
+                accumulatedInterest = 0.0
                 
                 val displayAmount = if (useCapitalization) currentBalance else initialAmount + totalProfit
                 growth.add(ChartPoint(monthIndex, displayAmount, totalProfit))
