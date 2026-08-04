@@ -72,8 +72,11 @@ class CalculatorViewModel : ViewModel() {
 
         val result = calculator.calculate(amount, termValue, rate, s.isTermInYears, s.isCapitalization, s.isEffectiveRate)
 
-        val calculatedEffectiveRate = if (!s.isEffectiveRate && s.isCapitalization && rate > 0) {
-            ((1 + rate / 100 / 12).pow(12) - 1) * 100
+        val calculatedEffectiveRate = if (!s.isEffectiveRate && s.isCapitalization && rate > 0 && termValue > 0) {
+            val totalMonths = if (s.isTermInYears) termValue * 12 else termValue
+            val termInYears = totalMonths / 12.0
+            val growthOverTerm = (1 + rate / 100 / 12).pow(totalMonths.toInt()) - 1
+            (growthOverTerm / termInYears) * 100
         } else null
 
         _state.value = _state.value.copy(
