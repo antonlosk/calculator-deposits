@@ -19,7 +19,7 @@ data class CalculatorState(
     val isCapitalization: Boolean = false,
     val finalAmount: Double = 0.0,
     val profit: Double = 0.0,
-    val growthData: List<Double> = emptyList()
+    val growthData: List<ChartPoint> = emptyList()
 )
 
 class CalculatorViewModel : ViewModel() {
