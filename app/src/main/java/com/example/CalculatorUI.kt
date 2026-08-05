@@ -419,16 +419,13 @@ fun HistoryContent(viewModel: CalculatorViewModel) {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(historyItems, key = { it.id }) { item ->
-                val dismissState = rememberSwipeToDismissBoxState(
-                    confirmValueChange = {
-                        if (it == SwipeToDismissBoxValue.EndToStart) {
-                            viewModel.onDeleteHistoryItem(item.id)
-                            true
-                        } else {
-                            false
-                        }
+                val dismissState = rememberSwipeToDismissBoxState()
+                
+                LaunchedEffect(dismissState.currentValue) {
+                    if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
+                        viewModel.onDeleteHistoryItem(item.id)
                     }
-                )
+                }
                 
                 SwipeToDismissBox(
                     state = dismissState,

@@ -145,9 +145,9 @@ class CalculatorViewModel(private val repository: HistoryRepository) : ViewModel
             return
         }
 
-        val safeAmount = amount!!
-        val safeTermValue = termValue!!
-        val safeRate = rate!!
+        val safeAmount = amount
+        val safeTermValue = termValue
+        val safeRate = rate
 
         val result = calculator.calculate(safeAmount, safeTermValue, safeRate, s.termUnit, s.isCapitalization, s.isEffectiveRate, s.startDate)
 
