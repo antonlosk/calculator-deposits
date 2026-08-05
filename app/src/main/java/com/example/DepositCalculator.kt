@@ -1,7 +1,8 @@
 package com.example
 
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.time.LocalDate
-import java.time.temporal.ChronoUnit
 
 enum class TermUnit {
     DAYS, MONTHS, YEARS
@@ -43,34 +44,44 @@ class DepositCalculator {
         growth.add(ChartPoint(0, initialAmount, 0.0))
 
         val useCapitalization = isCapitalization && !isEffectiveRate
-        var currentBalance = initialAmount
-        var accumulatedInterest = 0.0
-        var totalProfit = 0.0
+        var currentBalance = BigDecimal.valueOf(initialAmount)
+        var accumulatedInterest = BigDecimal.ZERO
+        var totalProfit = BigDecimal.ZERO
         
         var currentDate = startDate
         
         var monthIndex = 1
         var nextCapDate = startDate.plusMonths(1)
 
+        val rateDecimal = BigDecimal.valueOf(rate)
+        val hundred = BigDecimal("100")
+
         while (currentDate.isBefore(endDate)) {
-            val daysInYear = if (currentDate.isLeapYear) 366 else 365
-            val dailyInterest = currentBalance * (rate / 100.0) / daysInYear
+            val daysInYear = BigDecimal(if (currentDate.isLeapYear) 366 else 365)
+            val dailyInterest = currentBalance
+                .multiply(rateDecimal)
+                .divide(hundred, 10, RoundingMode.HALF_UP)
+                .divide(daysInYear, 10, RoundingMode.HALF_UP)
             
-            accumulatedInterest += dailyInterest
+            accumulatedInterest = accumulatedInterest.add(dailyInterest)
             
             currentDate = currentDate.plusDays(1)
             
             if (currentDate == nextCapDate || currentDate == endDate) {
-                val roundedInterest = kotlin.math.round(accumulatedInterest * 100) / 100.0
-                totalProfit += roundedInterest
+                val roundedInterest = accumulatedInterest.setScale(2, RoundingMode.HALF_UP)
+                totalProfit = totalProfit.add(roundedInterest)
 
                 if (useCapitalization) {
-                    currentBalance += roundedInterest
+                    currentBalance = currentBalance.add(roundedInterest)
                 }
-                accumulatedInterest = 0.0
+                accumulatedInterest = BigDecimal.ZERO
                 
-                val displayAmount = if (useCapitalization) currentBalance else initialAmount + totalProfit
-                growth.add(ChartPoint(monthIndex, displayAmount, totalProfit))
+                val displayAmount = if (useCapitalization) {
+                    currentBalance
+                } else {
+                    BigDecimal.valueOf(initialAmount).add(totalProfit)
+                }
+                growth.add(ChartPoint(monthIndex, displayAmount.toDouble(), totalProfit.toDouble()))
                 
                 if (currentDate == nextCapDate) {
                     monthIndex++
@@ -79,8 +90,12 @@ class DepositCalculator {
             }
         }
         
-        val finalAmount = initialAmount + totalProfit
+        val finalAmount = BigDecimal.valueOf(initialAmount).add(totalProfit)
         
-        return CalculationResult(finalAmount, totalProfit, growth)
+        return CalculationResult(
+            finalAmount.setScale(2, RoundingMode.HALF_UP).toDouble(), 
+            totalProfit.setScale(2, RoundingMode.HALF_UP).toDouble(), 
+            growth
+        )
     }
 }

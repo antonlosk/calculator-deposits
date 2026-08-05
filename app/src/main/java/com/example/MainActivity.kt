@@ -61,14 +61,28 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.History
 import java.time.format.FormatStyle
 
+import androidx.compose.foundation.isSystemInDarkTheme
+
 class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     enableEdgeToEdge()
+    
+    val settingsManager = SettingsManager(this)
+
     setContent {
-      MyApplicationTheme {
+      val useSystemTheme by settingsManager.useSystemTheme.collectAsState()
+      val useDarkTheme by settingsManager.useDarkTheme.collectAsState()
+      val useDynamicColor by settingsManager.useDynamicColor.collectAsState()
+      
+      val isDark = if (useSystemTheme) isSystemInDarkTheme() else useDarkTheme
+
+      MyApplicationTheme(
+        darkTheme = isDark,
+        dynamicColor = useDynamicColor
+      ) {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-          AppContent(modifier = Modifier.padding(innerPadding))
+          AppContent(modifier = Modifier.padding(innerPadding), settingsManager = settingsManager)
         }
       }
     }

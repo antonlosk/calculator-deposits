@@ -33,4 +33,10 @@
     <string name="history_total">Итог: %1$s</string>
     <string name="profit_chart">Прибыль: +%1$s</string>
     <string name="delete">Удалить</string>
+    <string name="tab_settings">Настройки</string>
+    <string name="settings_system_theme">Придерживаться темной темы системы</string>
+    <string name="settings_system_theme_desc">Автоматически переключаться на темную тему, соблюдая системные настройки</string>
+    <string name="settings_dark_theme">Включить темную тему</string>
+    <string name="settings_dynamic_color">Системная цветовая тема</string>
+    <string name="settings_dynamic_color_desc">Использовать цветовую тему, созданную системой на основе текущих обоев</string>
 </resources>

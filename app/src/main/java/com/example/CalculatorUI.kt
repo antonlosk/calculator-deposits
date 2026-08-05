@@ -57,10 +57,11 @@ import androidx.room.Room
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.filled.History
-enum class AppTab { MAIN, HISTORY }
+import androidx.compose.material.icons.filled.Settings
+enum class AppTab { MAIN, HISTORY, SETTINGS }
 
 @Composable
-fun AppContent(modifier: Modifier = Modifier) {
+fun AppContent(modifier: Modifier = Modifier, settingsManager: SettingsManager) {
     val context = LocalContext.current
     val db = remember { Room.databaseBuilder(context.applicationContext, AppDatabase::class.java, "history_db").build() }
     val repository = remember { HistoryRepository(db.historyDao()) }
@@ -102,6 +103,7 @@ fun AppContent(modifier: Modifier = Modifier) {
             when (currentTab) {
                 AppTab.MAIN -> MainContent(viewModel)
                 AppTab.HISTORY -> HistoryContent(viewModel)
+                AppTab.SETTINGS -> SettingsContent(settingsManager)
             }
         }
 
@@ -127,6 +129,12 @@ fun AppContent(modifier: Modifier = Modifier) {
                     label = stringResource(R.string.tab_history), 
                     isSelected = currentTab == AppTab.HISTORY,
                     onClick = { currentTab = AppTab.HISTORY }
+                )
+                NavigationItem(
+                    icon = Icons.Default.Settings, 
+                    label = stringResource(R.string.tab_settings), 
+                    isSelected = currentTab == AppTab.SETTINGS,
+                    onClick = { currentTab = AppTab.SETTINGS }
                 )
             }
         }
@@ -263,6 +271,7 @@ fun MainContent(viewModel: CalculatorViewModel) {
                     onValueChange = viewModel::onInitialAmountChanged,
                     label = { Text(stringResource(R.string.deposit_amount)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    isError = state.amountError,
                     modifier = Modifier.fillMaxWidth().testTag("input_amount"),
                     colors = OutlinedTextFieldDefaults.colors(
                         unfocusedContainerColor = MaterialTheme.colorScheme.surface,
@@ -283,6 +292,7 @@ fun MainContent(viewModel: CalculatorViewModel) {
                             onValueChange = viewModel::onTermChanged,
                             label = { Text(stringResource(R.string.term)) },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            isError = state.termError,
                             modifier = Modifier.fillMaxWidth().testTag("input_term"),
                             colors = OutlinedTextFieldDefaults.colors(
                                 unfocusedContainerColor = MaterialTheme.colorScheme.surface,
@@ -320,6 +330,7 @@ fun MainContent(viewModel: CalculatorViewModel) {
                             onValueChange = viewModel::onInterestRateChanged,
                             label = { Text(stringResource(R.string.rate)) },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            isError = state.rateError,
                             modifier = Modifier.fillMaxWidth().testTag("input_rate"),
                             colors = OutlinedTextFieldDefaults.colors(
                                 unfocusedContainerColor = MaterialTheme.colorScheme.surface,
@@ -738,5 +749,87 @@ fun DepositChart(
                 }
             }
         }
+    }
+}
+@Composable
+fun SettingsContent(settingsManager: SettingsManager) {
+    val useSystemTheme by settingsManager.useSystemTheme.collectAsState()
+    val useDarkTheme by settingsManager.useDarkTheme.collectAsState()
+    val useDynamicColor by settingsManager.useDynamicColor.collectAsState()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.tab_settings),
+            style = MaterialTheme.typography.headlineMedium,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        SettingsItem(
+            title = stringResource(R.string.settings_system_theme),
+            subtitle = stringResource(R.string.settings_system_theme_desc),
+            checked = useSystemTheme,
+            onCheckedChange = { settingsManager.setUseSystemTheme(it) }
+        )
+
+        AnimatedVisibility(visible = !useSystemTheme) {
+            SettingsItem(
+                title = stringResource(R.string.settings_dark_theme),
+                subtitle = null,
+                checked = useDarkTheme,
+                onCheckedChange = { settingsManager.setUseDarkTheme(it) }
+            )
+        }
+
+        SettingsItem(
+            title = stringResource(R.string.settings_dynamic_color),
+            subtitle = stringResource(R.string.settings_dynamic_color_desc),
+            checked = useDynamicColor,
+            onCheckedChange = { settingsManager.setUseDynamicColor(it) }
+        )
+    }
+}
+
+@Composable
+fun SettingsItem(
+    title: String,
+    subtitle: String?,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onCheckedChange(!checked) }
+            .padding(vertical = 12.dp, horizontal = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            if (subtitle != null) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.outline
+                )
+            }
+        }
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            modifier = Modifier.testTag(title)
+        )
     }
 }

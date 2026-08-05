@@ -23,7 +23,10 @@ data class CalculatorState(
     val profit: Double = 0.0,
     val calculatedEffectiveRate: Double? = null,
     val startDate: LocalDate = LocalDate.now(),
-    val growthData: List<ChartPoint> = emptyList()
+    val growthData: List<ChartPoint> = emptyList(),
+    val amountError: Boolean = false,
+    val termError: Boolean = false,
+    val rateError: Boolean = false
 )
 
 class CalculatorViewModel(private val repository: HistoryRepository) : ViewModel() {
@@ -41,30 +44,37 @@ class CalculatorViewModel(private val repository: HistoryRepository) : ViewModel
 
     fun onInitialAmountChanged(value: String) {
         _state.value = _state.value.copy(initialAmount = value)
+        calculate()
     }
 
     fun onTermChanged(value: String) {
         _state.value = _state.value.copy(term = value)
+        calculate()
     }
 
     fun onTermUnitChanged(unit: TermUnit) {
         _state.value = _state.value.copy(termUnit = unit)
+        calculate()
     }
 
     fun onInterestRateChanged(value: String) {
         _state.value = _state.value.copy(interestRate = value)
+        calculate()
     }
 
     fun onRateTypeChanged(isEffective: Boolean) {
         _state.value = _state.value.copy(isEffectiveRate = isEffective)
+        calculate()
     }
 
     fun onCapitalizationChanged(value: Boolean) {
         _state.value = _state.value.copy(isCapitalization = value)
+        calculate()
     }
     
     fun onStartDateChanged(date: LocalDate) {
         _state.value = _state.value.copy(startDate = date)
+        calculate()
     }
 
     fun onCalculateClicked() {
@@ -100,28 +110,52 @@ class CalculatorViewModel(private val repository: HistoryRepository) : ViewModel
 
     private fun calculate() {
         val s = _state.value
-        val amount = s.initialAmount.replace(',', '.').toDoubleOrNull() ?: 0.0
-        val termValue = s.term.replace(',', '.').toDoubleOrNull() ?: 0.0
-        val rate = s.interestRate.replace(',', '.').toDoubleOrNull() ?: 0.0
+        val amount = s.initialAmount.replace(',', '.').toDoubleOrNull()
+        val termValue = s.term.replace(',', '.').toDoubleOrNull()
+        val rate = s.interestRate.replace(',', '.').toDoubleOrNull()
 
-        val result = calculator.calculate(amount, termValue, rate, s.termUnit, s.isCapitalization, s.isEffectiveRate, s.startDate)
+        val amountError = amount == null || amount <= 0
+        val termError = termValue == null || termValue <= 0
+        val rateError = rate == null || rate < 0
+
+        if (amountError || termError || rateError) {
+            _state.value = _state.value.copy(
+                finalAmount = 0.0,
+                profit = 0.0,
+                calculatedEffectiveRate = null,
+                growthData = emptyList(),
+                amountError = amountError,
+                termError = termError,
+                rateError = rateError
+            )
+            return
+        }
+
+        val safeAmount = amount!!
+        val safeTermValue = termValue!!
+        val safeRate = rate!!
+
+        val result = calculator.calculate(safeAmount, safeTermValue, safeRate, s.termUnit, s.isCapitalization, s.isEffectiveRate, s.startDate)
 
         val endDate = when (s.termUnit) {
-            TermUnit.DAYS -> s.startDate.plusDays(termValue.toLong())
-            TermUnit.MONTHS -> s.startDate.plusMonths(termValue.toLong())
-            TermUnit.YEARS -> s.startDate.plusYears(termValue.toLong())
+            TermUnit.DAYS -> s.startDate.plusDays(safeTermValue.toLong())
+            TermUnit.MONTHS -> s.startDate.plusMonths(safeTermValue.toLong())
+            TermUnit.YEARS -> s.startDate.plusYears(safeTermValue.toLong())
         }
         val daysInTerm = java.time.temporal.ChronoUnit.DAYS.between(s.startDate, endDate)
 
-        val calculatedEffectiveRate = if (!s.isEffectiveRate && s.isCapitalization && rate > 0 && daysInTerm > 0 && amount > 0) {
-            (result.profit / amount) * (365.0 / daysInTerm) * 100.0
+        val calculatedEffectiveRate = if (!s.isEffectiveRate && s.isCapitalization && safeRate > 0 && daysInTerm > 0 && safeAmount > 0) {
+            (result.profit / safeAmount) * (365.0 / daysInTerm) * 100.0
         } else null
 
         _state.value = _state.value.copy(
             finalAmount = result.finalAmount,
             profit = result.profit,
             calculatedEffectiveRate = calculatedEffectiveRate,
-            growthData = result.growthData
+            growthData = result.growthData,
+            amountError = amountError,
+            termError = termError,
+            rateError = rateError
         )
     }
 }
