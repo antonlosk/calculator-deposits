@@ -44,37 +44,34 @@ class CalculatorViewModel(private val repository: HistoryRepository) : ViewModel
 
     fun onInitialAmountChanged(value: String) {
         _state.value = _state.value.copy(initialAmount = value)
-        calculate()
+        validateInput()
     }
 
     fun onTermChanged(value: String) {
         _state.value = _state.value.copy(term = value)
-        calculate()
+        validateInput()
     }
 
     fun onTermUnitChanged(unit: TermUnit) {
         _state.value = _state.value.copy(termUnit = unit)
-        calculate()
+        validateInput()
     }
 
     fun onInterestRateChanged(value: String) {
         _state.value = _state.value.copy(interestRate = value)
-        calculate()
+        validateInput()
     }
 
     fun onRateTypeChanged(isEffective: Boolean) {
         _state.value = _state.value.copy(isEffectiveRate = isEffective)
-        calculate()
     }
 
     fun onCapitalizationChanged(value: Boolean) {
         _state.value = _state.value.copy(isCapitalization = value)
-        calculate()
     }
     
     fun onStartDateChanged(date: LocalDate) {
         _state.value = _state.value.copy(startDate = date)
-        calculate()
     }
 
     fun onCalculateClicked() {
@@ -106,6 +103,23 @@ class CalculatorViewModel(private val repository: HistoryRepository) : ViewModel
         viewModelScope.launch {
             repository.deleteById(id)
         }
+    }
+
+    private fun validateInput() {
+        val s = _state.value
+        val amount = s.initialAmount.replace(',', '.').toDoubleOrNull()
+        val termValue = s.term.replace(',', '.').toDoubleOrNull()
+        val rate = s.interestRate.replace(',', '.').toDoubleOrNull()
+
+        val amountError = amount == null || amount <= 0
+        val termError = termValue == null || termValue <= 0
+        val rateError = rate == null || rate < 0
+
+        _state.value = _state.value.copy(
+            amountError = amountError,
+            termError = termError,
+            rateError = rateError
+        )
     }
 
     private fun calculate() {
