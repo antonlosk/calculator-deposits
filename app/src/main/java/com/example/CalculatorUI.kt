@@ -108,35 +108,25 @@ fun AppContent(modifier: Modifier = Modifier, settingsManager: SettingsManager) 
         }
 
         // Bottom Navigation
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            color = MaterialTheme.colorScheme.surface,
-            shadowElevation = 8.dp
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceAround,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                NavigationItem(
-                    icon = Icons.Default.Calculate, 
-                    label = stringResource(R.string.tab_main), 
-                    isSelected = currentTab == AppTab.MAIN,
-                    onClick = { currentTab = AppTab.MAIN }
-                )
-                NavigationItem(
-                    icon = Icons.Default.History, 
-                    label = stringResource(R.string.tab_history), 
-                    isSelected = currentTab == AppTab.HISTORY,
-                    onClick = { currentTab = AppTab.HISTORY }
-                )
-                NavigationItem(
-                    icon = Icons.Default.Settings, 
-                    label = stringResource(R.string.tab_settings), 
-                    isSelected = currentTab == AppTab.SETTINGS,
-                    onClick = { currentTab = AppTab.SETTINGS }
-                )
-            }
+        NavigationBar {
+            NavigationBarItem(
+                icon = { Icon(Icons.Default.Calculate, contentDescription = stringResource(R.string.tab_main)) },
+                label = { Text(stringResource(R.string.tab_main)) },
+                selected = currentTab == AppTab.MAIN,
+                onClick = { currentTab = AppTab.MAIN }
+            )
+            NavigationBarItem(
+                icon = { Icon(Icons.Default.History, contentDescription = stringResource(R.string.tab_history)) },
+                label = { Text(stringResource(R.string.tab_history)) },
+                selected = currentTab == AppTab.HISTORY,
+                onClick = { currentTab = AppTab.HISTORY }
+            )
+            NavigationBarItem(
+                icon = { Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.tab_settings)) },
+                label = { Text(stringResource(R.string.tab_settings)) },
+                selected = currentTab == AppTab.SETTINGS,
+                onClick = { currentTab = AppTab.SETTINGS }
+            )
         }
     }
 }
@@ -484,18 +474,7 @@ fun HistoryContent(viewModel: CalculatorViewModel) {
     }
 }
 
-@Composable
-private fun NavigationItem(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, isSelected: Boolean, onClick: () -> Unit = {}) {
-    val color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally, 
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-        modifier = Modifier.clickable(onClick = onClick).padding(8.dp)
-    ) {
-        Icon(icon, contentDescription = label, tint = color)
-        Text(label, style = MaterialTheme.typography.labelSmall, color = color)
-    }
-}
+
 
 @Composable
 fun DepositChart(

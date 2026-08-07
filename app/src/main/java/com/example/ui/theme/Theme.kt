@@ -30,6 +30,26 @@ private val ElegantDarkColorScheme =
     outline = TextSecondary
   )
 
+private val ElegantLightColorScheme =
+  lightColorScheme(
+    primary = PrimaryLight,
+    onPrimary = OnPrimaryLight,
+    primaryContainer = SurfaceVariantLight,
+    onPrimaryContainer = PrimaryLight,
+    secondary = PrimaryLight,
+    onSecondary = OnPrimaryLight,
+    tertiaryContainer = SurfaceVariantLight,
+    onTertiaryContainer = TextPrimaryLight,
+    background = BackgroundLight,
+    onBackground = TextPrimaryLight,
+    surface = SurfaceLight,
+    onSurface = TextPrimaryLight,
+    surfaceVariant = SurfaceVariantLight,
+    onSurfaceVariant = TextPrimaryLight,
+    error = ErrorLight,
+    outline = TextSecondaryLight
+  )
+
 @Composable
 fun MyApplicationTheme(
   darkTheme: Boolean = isSystemInDarkTheme(),
@@ -43,7 +63,8 @@ fun MyApplicationTheme(
         val context = LocalContext.current
         if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
       }
-      else -> ElegantDarkColorScheme
+      darkTheme -> ElegantDarkColorScheme
+      else -> ElegantLightColorScheme
     }
 
   MaterialTheme(colorScheme = colorScheme, typography = Typography, content = content)
